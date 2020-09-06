@@ -5,6 +5,6 @@ namespace KafkaConsumer.MessageHandler
 {
 	public interface IMessageHandler<TKey, TValue>
 	{
-		Task HandleAsync(ConsumeResult<TKey, TValue> consumeResult);
+		Task HandleAsync(Message<TKey, TValue> message);
 	}
 }
