@@ -33,7 +33,7 @@ namespace KafkaConsumer.Tests.Processor
 		public async Task EnqueueConsumedResultToTopicPartitionQueue()
 		{
 			// arrange
-			var cr = ConsumeResult;
+			var cr = DataGenerator.ConsumeResult;
 			var cts = new CancellationTokenSource();
 
 			_consumer
@@ -53,22 +53,5 @@ namespace KafkaConsumer.Tests.Processor
 				tpq => tpq.EnqueueAsync(cr.IsExpected()),
 				Times.Once());
 		}
-
-		private static TopicPartition TopicPartition =>
-					new TopicPartition("test-topic", 1);
-
-		private static TopicPartitionOffset TopicPartitionOffset =>
-			new TopicPartitionOffset(TopicPartition, 1);
-
-		private static ConsumeResult<string, string> ConsumeResult =>
-			new ConsumeResult<string, string>
-			{
-				Message = new Message<string, string>
-				{
-					Key = "key",
-					Value = "value"
-				},
-				TopicPartitionOffset = TopicPartitionOffset
-			};
 	}
 }
