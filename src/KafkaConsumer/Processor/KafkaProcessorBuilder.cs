@@ -11,31 +11,51 @@ namespace KafkaConsumer.Processor
 {
 	public class KafkaProcessorBuilder<TKey, TValue>
 	{
-		private ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
+		private readonly ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
 		private Func<TopicPartition, IMessageHandler<TKey, TValue>> _handlerFactory;
-		private ConsumerConfig _config;
+		private ConsumerConfig _consumerConfig;
 		private string _topic;
 
-		public KafkaProcessorBuilder()
+		public KafkaProcessorBuilder(ITopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector)
 		{
+			_topicPartitionQueueSelector = topicPartitionQueueSelector;
 		}
 
-		public KafkaProcessorBuilder<TKey, TValue> WithConfig(ConsumerConfig config)
+		public static KafkaProcessorBuilder<TKey, TValue> CreateDefault()
 		{
-			_config = config;
+			var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
+
+			var topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(queueFactory);
+
+			return new KafkaProcessorBuilder<TKey, TValue>(topicPartitionQueueSelector);
+		}
+
+		public KafkaProcessorBuilder<TKey, TValue> WithConfig(ConsumerConfig consumerConfig)
+		{
+			if (_consumerConfig != null) 
+				throw new InvalidOperationException("'consumerConfig' was already set!");
+
+			_consumerConfig = consumerConfig;
 
 			return this;
 		}
 
 		public KafkaProcessorBuilder<TKey, TValue> FromTopic(string topic)
 		{
+			if (_topic != null) 
+				throw new InvalidOperationException("'topic' was already set!");
+
 			_topic = topic;
 
 			return this;
 		}
 
-		public KafkaProcessorBuilder<TKey, TValue> WithHandlerFactory(Func<TopicPartition, IMessageHandler<TKey, TValue>> handlerFactory)
+		public KafkaProcessorBuilder<TKey, TValue> WithHandlerFactory(
+			Func<TopicPartition, IMessageHandler<TKey, TValue>> handlerFactory)
 		{
+			if (_handlerFactory != null) 
+				throw new InvalidOperationException("'handlerFactory' was already set!");
+			
 			_handlerFactory = handlerFactory;
 
 			return this;
@@ -43,17 +63,16 @@ namespace KafkaConsumer.Processor
 
 		public IKafkaProcessor<TKey, TValue> Build()
 		{
-			var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
-			
-			_topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(queueFactory);
+			CheckIfConfigured();
 
-			var consumer = new ConsumerBuilder<TKey, TValue>(_config)
+			var consumer = new ConsumerBuilder<TKey, TValue>(_consumerConfig)
 				.SetPartitionsAssignedHandler(OnPartitionsAssigned)
 				.SetPartitionsRevokedHandler(OnPartitionsRevoked)
 				.Build();
 
 			//TODO: Value/Key deserializers for consumer
 
+			//TODO: expose WithProcessorConfig() method
 			var config = Options.Create(new ProcessorConfig
 			{
 				Topic = _topic
@@ -96,6 +115,31 @@ namespace KafkaConsumer.Processor
 			}
 
 			return partitions.Select(p => new TopicPartitionOffset(p, Offset.Stored));
+		}
+
+		private void CheckIfConfigured()
+		{
+			CheckIfConsumerConfigSet();
+			CheckIfHandlerFactorySet();
+			CheckIfTopicSet();
+		}
+
+		private void CheckIfConsumerConfigSet()
+		{
+			if (_consumerConfig == null) 
+				throw new InvalidOperationException("'consumerConfig' must be set!");
+		}
+
+		private void CheckIfHandlerFactorySet()
+		{
+			if (_handlerFactory == null) 
+				throw new InvalidOperationException("'handlerFactory' must be set!");
+		}
+
+		private void CheckIfTopicSet()
+		{
+			if (string.IsNullOrEmpty(_topic)) 
+				throw new InvalidOperationException("'topic' must be set!");
 		}
 	}
 }
