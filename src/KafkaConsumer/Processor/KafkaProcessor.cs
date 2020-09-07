@@ -38,7 +38,9 @@ namespace KafkaConsumer.Processor
 					{
 						var queue = _topicPartitionQueueSelector.Select(consumeResult.TopicPartition);
 
-						await queue.EnqueueAsync(consumeResult);
+						var message = new MessageHandler.Message<TKey, TValue>(_consumer, consumeResult);
+
+						await queue.EnqueueAsync(message);
 					}
 				}
 			}

@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Confluent.Kafka;
 
 namespace KafkaConsumer.MessageHandler
 {

@@ -42,6 +42,7 @@ namespace KafkaConsumer.Tests.Processor
 		{
 			// arrange
 			var cr = DataGenerator.ConsumeResult;
+			var message = DataGenerator.GenerateMessage(_consumer.Object);
 			var cts = new CancellationTokenSource();
 
 			_consumer
@@ -58,7 +59,7 @@ namespace KafkaConsumer.Tests.Processor
 
 			// assert
 			_topicPartitionQueue.Verify(
-				tpq => tpq.EnqueueAsync(cr.IsActual()),
+				tpq => tpq.EnqueueAsync(message.IsActual()),
 				Times.Once());
 		}
 	}

@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Confluent.Kafka;
 using KafkaConsumer.MessageHandler;
 
 namespace KafkaConsumer.TopicPartitionQueue
@@ -14,7 +13,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 			_messageHandler = messageHandler;
 		}
 
-		public Task EnqueueAsync(ConsumeResult<TKey, TValue> consumeResult)
+		public Task EnqueueAsync(Message<TKey, TValue> consumeResult)
 		{
 			//TODO: use Dataflow blocks
 

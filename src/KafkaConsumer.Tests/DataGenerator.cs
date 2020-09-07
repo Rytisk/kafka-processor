@@ -18,6 +18,9 @@ namespace KafkaConsumer.Tests
 		public static TopicPartitionOffset TopicPartitionOffset =>
 			new TopicPartitionOffset(TopicPartition, 1);
 
+		public static MessageHandler.Message<string, string> GenerateMessage(IConsumer<string, string> consumer) =>
+			new MessageHandler.Message<string, string>(consumer, ConsumeResult);
+
 		public static ConsumeResult<string, string> ConsumeResult =>
 			new ConsumeResult<string, string>
 			{

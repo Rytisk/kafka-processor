@@ -4,16 +4,25 @@ namespace KafkaConsumer.MessageHandler
 {
 	public class Message<TKey, TValue>
 	{
+		private readonly IConsumer<TKey, TValue> _consumer;
+
 		public ConsumeResult<TKey, TValue> ConsumeResult { get; set; }
+
+		public Message(IConsumer<TKey, TValue> consumer, ConsumeResult<TKey, TValue> consumeResult)
+		{
+			_consumer = consumer;
+
+			ConsumeResult = consumeResult;
+		}
 
 		public void StoreOffset()
 		{
-			//TODO: call on IConsumer
+			_consumer.StoreOffset(ConsumeResult);
 		}
 
 		public void Commit()
 		{
-			//TODO: call on IConsumer
+			_consumer.Commit(ConsumeResult);
 		}
 	}
 }
