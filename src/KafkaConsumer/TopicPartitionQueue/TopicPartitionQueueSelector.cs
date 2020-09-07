@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Confluent.Kafka;
 using KafkaConsumer.Exceptions;
+using KafkaConsumer.MessageHandler;
 
 namespace KafkaConsumer.TopicPartitionQueue
 {
@@ -9,8 +10,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 		private readonly Dictionary<TopicPartition, ITopicPartitionQueue<TKey, TValue>> _queues;
 		private readonly ITopicPartitionQueueFactory<TKey, TValue> _topicPartitionQueueFactory;
 
-		public TopicPartitionQueueSelector(
-			ITopicPartitionQueueFactory<TKey, TValue> topicPartitionQueueFactory)
+		public TopicPartitionQueueSelector(ITopicPartitionQueueFactory<TKey, TValue> topicPartitionQueueFactory)
 		{
 			_queues = new Dictionary<TopicPartition, ITopicPartitionQueue<TKey, TValue>>();
 			_topicPartitionQueueFactory = topicPartitionQueueFactory;
@@ -25,12 +25,9 @@ namespace KafkaConsumer.TopicPartitionQueue
 					$"TopicPartitionQueue not found for {topicPartition}");
 		}
 
-		public void Fill(IEnumerable<TopicPartition> topicPartitions)
+		public void AddQueue(TopicPartition topicPartition, IMessageHandler<TKey, TValue> messageHandler)
 		{
-			foreach (var tp in topicPartitions)
-			{
-				_queues.Add(tp, _topicPartitionQueueFactory.Create());
-			}
+			_queues.Add(topicPartition, _topicPartitionQueueFactory.Create(messageHandler));
 		}
 
 		public void Remove(IEnumerable<TopicPartition> topicPartitions)

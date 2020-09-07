@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Confluent.Kafka;
+using KafkaConsumer.MessageHandler;
 using KafkaConsumer.Processor.Config;
 using KafkaConsumer.TopicPartitionQueue;
 using Microsoft.Extensions.Options;
@@ -11,12 +12,12 @@ namespace KafkaConsumer.Processor
 	public class KafkaProcessorBuilder<TKey, TValue>
 	{
 		private ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
+		private Func<TopicPartition, IMessageHandler<TKey, TValue>> _handlerFactory;
 		private ConsumerConfig _config;
 		private string _topic;
 
-		public KafkaProcessorBuilder(TopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector)
+		public KafkaProcessorBuilder()
 		{
-			_topicPartitionQueueSelector = topicPartitionQueueSelector;
 		}
 
 		public KafkaProcessorBuilder<TKey, TValue> WithConfig(ConsumerConfig config)
@@ -32,8 +33,20 @@ namespace KafkaConsumer.Processor
 
 			return this;
 		}
+
+		public KafkaProcessorBuilder<TKey, TValue> WithHandlerFactory(Func<TopicPartition, IMessageHandler<TKey, TValue>> handlerFactory)
+		{
+			_handlerFactory = handlerFactory;
+
+			return this;
+		}
+
 		public IKafkaProcessor<TKey, TValue> Build()
 		{
+			var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
+			
+			_topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(queueFactory);
+
 			var consumer = new ConsumerBuilder<TKey, TValue>(_config)
 				.SetPartitionsAssignedHandler(OnPartitionsAssigned)
 				.SetPartitionsRevokedHandler(OnPartitionsRevoked)
@@ -75,7 +88,12 @@ namespace KafkaConsumer.Processor
 			IConsumer<TKey, TValue> consumer,
 			List<TopicPartition> partitions)
 		{
-			_topicPartitionQueueSelector.Fill(partitions);
+			foreach (var partition in partitions)
+			{
+				var messageHandler = _handlerFactory.Invoke(partition);
+
+				_topicPartitionQueueSelector.AddQueue(partition, messageHandler);
+			}
 
 			return partitions.Select(p => new TopicPartitionOffset(p, Offset.Stored));
 		}

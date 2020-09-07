@@ -4,16 +4,13 @@ namespace KafkaConsumer.TopicPartitionQueue
 {
 	public class TopicPartitionQueueFactory<TKey, TValue> : ITopicPartitionQueueFactory<TKey, TValue>
 	{
-		private readonly IMessageHandler<TKey, TValue> _messageHandler;
-
-		public TopicPartitionQueueFactory(IMessageHandler<TKey, TValue> messageHandler)
+		public TopicPartitionQueueFactory()
 		{
-			_messageHandler = messageHandler;
 		}
 
-		public ITopicPartitionQueue<TKey, TValue> Create()
+		public ITopicPartitionQueue<TKey, TValue> Create(IMessageHandler<TKey, TValue> messageHandler)
 		{
-			return new TopicPartitionQueue<TKey, TValue>(_messageHandler);
+			return new TopicPartitionQueue<TKey, TValue>(messageHandler);
 		}
 	}
 }
