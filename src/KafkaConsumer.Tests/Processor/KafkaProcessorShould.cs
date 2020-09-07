@@ -50,7 +50,7 @@ namespace KafkaConsumer.Tests.Processor
 				.Returns(cr);
 
 			_topicPartitionQueueSelector
-				.Setup(t => t.Select(cr.TopicPartition.IsExpected()))
+				.Setup(t => t.Select(cr.TopicPartition.IsActual()))
 				.Returns(_topicPartitionQueue.Object);
 
 			// act
@@ -58,7 +58,7 @@ namespace KafkaConsumer.Tests.Processor
 
 			// assert
 			_topicPartitionQueue.Verify(
-				tpq => tpq.EnqueueAsync(cr.IsExpected()),
+				tpq => tpq.EnqueueAsync(cr.IsActual()),
 				Times.Once());
 		}
 	}
