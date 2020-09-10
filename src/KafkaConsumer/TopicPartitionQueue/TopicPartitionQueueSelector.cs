@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Confluent.Kafka;
 using KafkaConsumer.Exceptions;
 using KafkaConsumer.MessageHandler;
@@ -32,10 +34,10 @@ namespace KafkaConsumer.TopicPartitionQueue
 
 		public void Remove(IEnumerable<TopicPartition> topicPartitions)
 		{
+			Task.WaitAll(_queues.Select(q => q.Value.CompleteAsync()).ToArray());
+
 			foreach (var tp in topicPartitions)
 			{
-				//TODO: finalize each TopicPartitionQueue?
-
 				_queues.Remove(tp);
 			}
 		}

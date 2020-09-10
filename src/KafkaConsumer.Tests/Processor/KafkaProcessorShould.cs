@@ -59,7 +59,7 @@ namespace KafkaConsumer.Tests.Processor
 
 			// assert
 			_topicPartitionQueue.Verify(
-				tpq => tpq.EnqueueAsync(message.IsActual()),
+				tpq => tpq.TryEnqueueAsync(message.IsActual()),
 				Times.Once());
 		}
 	}
