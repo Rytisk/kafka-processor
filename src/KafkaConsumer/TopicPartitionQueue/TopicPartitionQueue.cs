@@ -28,28 +28,38 @@ namespace KafkaConsumer.TopicPartitionQueue
 					BoundedCapacity = 1
 				});
 
-			_bufferBlock.LinkTo(_actionBlock);
+			_bufferBlock.LinkTo(_actionBlock, new DataflowLinkOptions
+			{
+				PropagateCompletion = true
+			});
 
 			PropagateErrors(_actionBlock, _bufferBlock);
 		}
 
 		public async Task CompleteAsync()
 		{
+			_bufferBlock.Complete();
+
+			await _bufferBlock.Completion;
+		}
+
+		public async Task AbortAsync()
+		{
 			_actionBlock.Complete();
 
 			await _actionBlock.Completion;
 		}
 
-		public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> consumeResult) =>
-			await _bufferBlock.SendAsync(consumeResult);
+		public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> message) =>
+			await _bufferBlock.SendAsync(message);
 
 		private static void PropagateErrors(IDataflowBlock from, IDataflowBlock to)
 		{
-			from.Completion.ContinueWith((t) =>
+			from.Completion.ContinueWith(task =>
 			{
-				if (t.IsFaulted)
+				if (task.IsFaulted)
 				{
-					to.Fault(from.Completion.Exception.InnerException);
+					to.Fault(task.Exception.InnerException);
 				}
 			});
 		}

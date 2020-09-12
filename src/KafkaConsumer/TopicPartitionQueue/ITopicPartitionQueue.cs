@@ -5,8 +5,8 @@ namespace KafkaConsumer.TopicPartitionQueue
 {
 	public interface ITopicPartitionQueue<TKey, TValue>
 	{
-		Task<bool> TryEnqueueAsync(Message<TKey, TValue> consumeResult);
-
+		Task<bool> TryEnqueueAsync(Message<TKey, TValue> message);
 		Task CompleteAsync();
+		Task AbortAsync();
 	}
 }

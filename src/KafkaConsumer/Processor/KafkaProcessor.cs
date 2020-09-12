@@ -44,7 +44,7 @@ namespace KafkaConsumer.Processor
 
 						if (!isEnqueued)
 						{
-							await queue.CompleteAsync();
+							await queue.AbortAsync();
 						}
 					}
 				}

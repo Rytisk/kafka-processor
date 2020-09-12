@@ -34,6 +34,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 
 		public void Remove(IEnumerable<TopicPartition> topicPartitions)
 		{
+			//TODO: Abort vs Complete
 			Task.WaitAll(_queues.Select(q => q.Value.CompleteAsync()).ToArray());
 
 			foreach (var tp in topicPartitions)
