@@ -41,7 +41,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 		{
 			_bufferBlock.Complete();
 
-			await _bufferBlock.Completion;
+			await _actionBlock.Completion;
 		}
 
 		public async Task AbortAsync()
