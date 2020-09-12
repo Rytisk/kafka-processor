@@ -21,7 +21,8 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
 			_topicPartitionQueueFactory = new Mock<ITopicPartitionQueueFactory<string, string>>();
 
 			_topicPartitionQueueSelector = new TopicPartitionQueueSelector<string, string>(
-				_topicPartitionQueueFactory.Object);
+				_topicPartitionQueueFactory.Object,
+				1000);
 		}
 
 		[Fact]
@@ -31,8 +32,10 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
 			var tp = DataGenerator.TopicPartition;
 
 			_topicPartitionQueueFactory
-							.Setup(tpqf => tpqf.Create(It.IsAny<IMessageHandler<string, string>>()))
-							.Returns(_topicPartitionQueue.Object);
+				.Setup(tpqf => tpqf.Create(
+					It.IsAny<IMessageHandler<string, string>>(),
+					It.IsAny<int>()))
+				.Returns(_topicPartitionQueue.Object);
 
 			_topicPartitionQueueSelector.AddQueue(tp, _messageHandler.Object);
 
@@ -50,7 +53,9 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
 			var tps = DataGenerator.GenerateTopicPartitions(10);
 
 			_topicPartitionQueueFactory
-				.Setup(tpqf => tpqf.Create(It.IsAny<IMessageHandler<string, string>>()))
+				.Setup(tpqf => tpqf.Create(
+					It.IsAny<IMessageHandler<string, string>>(),
+					It.IsAny<int>()))
 				.Returns(_topicPartitionQueue.Object);
 
 			// act
@@ -75,7 +80,9 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
 			var tps = DataGenerator.GenerateTopicPartitions(10);
 
 			_topicPartitionQueueFactory
-				.Setup(tpqf => tpqf.Create(It.IsAny<IMessageHandler<string, string>>()))
+				.Setup(tpqf => tpqf.Create(
+					It.IsAny<IMessageHandler<string, string>>(),
+					It.IsAny<int>()))
 				.Returns(_topicPartitionQueue.Object);
 
 			foreach (var tp in tps)

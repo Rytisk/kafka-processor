@@ -25,7 +25,9 @@ namespace KafkaConsumer.Processor
 		{
 			var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
 
-			var topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(queueFactory);
+			var topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(
+				queueFactory,
+				1000);
 
 			return new KafkaProcessorBuilder<TKey, TValue>(topicPartitionQueueSelector);
 		}

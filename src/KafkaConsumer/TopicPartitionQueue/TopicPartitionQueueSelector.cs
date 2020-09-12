@@ -11,10 +11,15 @@ namespace KafkaConsumer.TopicPartitionQueue
 	{
 		private readonly Dictionary<TopicPartition, ITopicPartitionQueue<TKey, TValue>> _queues;
 		private readonly ITopicPartitionQueueFactory<TKey, TValue> _topicPartitionQueueFactory;
+		private readonly int _queueCapacity;
 
-		public TopicPartitionQueueSelector(ITopicPartitionQueueFactory<TKey, TValue> topicPartitionQueueFactory)
+		public TopicPartitionQueueSelector(
+			ITopicPartitionQueueFactory<TKey, TValue> topicPartitionQueueFactory,
+			int queueCapacity)
 		{
 			_queues = new Dictionary<TopicPartition, ITopicPartitionQueue<TKey, TValue>>();
+
+			_queueCapacity = queueCapacity;
 			_topicPartitionQueueFactory = topicPartitionQueueFactory;
 		}
 
@@ -29,7 +34,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 
 		public void AddQueue(TopicPartition topicPartition, IMessageHandler<TKey, TValue> messageHandler)
 		{
-			_queues.Add(topicPartition, _topicPartitionQueueFactory.Create(messageHandler));
+			_queues.Add(topicPartition, _topicPartitionQueueFactory.Create(messageHandler, _queueCapacity));
 		}
 
 		public void Remove(IEnumerable<TopicPartition> topicPartitions)

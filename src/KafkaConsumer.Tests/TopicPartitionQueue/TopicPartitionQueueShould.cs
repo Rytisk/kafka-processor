@@ -21,7 +21,7 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
             _consumer = new Mock<IConsumer<string, string>>();
             _messageHandler = new Mock<IMessageHandler<string, string>>();
 
-            _topicPartitionQueue = new TopicPartitionQueue<string, string>(_messageHandler.Object);
+            _topicPartitionQueue = new TopicPartitionQueue<string, string>(_messageHandler.Object, 1000);
         }
 
         [Theory]

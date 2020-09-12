@@ -11,14 +11,14 @@ namespace KafkaConsumer.TopicPartitionQueue
 		private readonly BufferBlock<Message<TKey, TValue>> _bufferBlock;
 		private readonly ActionBlock<Message<TKey, TValue>> _actionBlock;
 
-		public TopicPartitionQueue(IMessageHandler<TKey, TValue> messageHandler)
+		public TopicPartitionQueue(IMessageHandler<TKey, TValue> messageHandler, int queueCapacity)
 		{
 			_messageHandler = messageHandler;
 
 			_bufferBlock = new BufferBlock<Message<TKey, TValue>>(
 				new DataflowBlockOptions 
 				{
-					BoundedCapacity = 1000
+					BoundedCapacity = queueCapacity
 				});
 
 			_actionBlock = new ActionBlock<Message<TKey, TValue>>(
