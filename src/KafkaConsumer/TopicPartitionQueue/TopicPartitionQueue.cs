@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using KafkaConsumer.Extensions;
 using KafkaConsumer.MessageHandler;
 
 namespace KafkaConsumer.TopicPartitionQueue
@@ -33,7 +34,7 @@ namespace KafkaConsumer.TopicPartitionQueue
 				PropagateCompletion = true
 			});
 
-			PropagateErrors(_actionBlock, _bufferBlock);
+			_actionBlock.PropagateErrorsTo(_bufferBlock);
 		}
 
 		public async Task CompleteAsync()
@@ -52,16 +53,5 @@ namespace KafkaConsumer.TopicPartitionQueue
 
 		public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> message) =>
 			await _bufferBlock.SendAsync(message);
-
-		private static void PropagateErrors(IDataflowBlock from, IDataflowBlock to)
-		{
-			from.Completion.ContinueWith(task =>
-			{
-				if (task.IsFaulted)
-				{
-					to.Fault(task.Exception.InnerException);
-				}
-			});
-		}
 	}
 }
