@@ -12,9 +12,12 @@ namespace KafkaConsumer.Processor
 	public class KafkaProcessorBuilder<TKey, TValue>
 	{
 		private readonly ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
+
 		private Func<TopicPartition, IMessageHandler<TKey, TValue>> _handlerFactory;
 		private ConsumerConfig _consumerConfig;
 		private string _topic;
+		private IDeserializer<TKey> _keyDeserializer;
+		private IDeserializer<TValue> _valueDeserializer;
 
 		public KafkaProcessorBuilder(ITopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector)
 		{
@@ -63,19 +66,34 @@ namespace KafkaConsumer.Processor
 			return this;
 		}
 
+		public KafkaProcessorBuilder<TKey, TValue> WithKeyDeserializer(IDeserializer<TKey> keyDeserializer)
+		{
+			if (_keyDeserializer != null)
+				throw new InvalidOperationException("'keyDeserializer' was already set!");
+
+			_keyDeserializer = keyDeserializer;
+			
+			return this;
+		}
+
+		public KafkaProcessorBuilder<TKey, TValue> WithValueDeserializer(IDeserializer<TValue> valueDeserializer)
+		{
+			if (_valueDeserializer != null)
+				throw new InvalidOperationException("'valueDeserializer' was already set!");
+
+			_valueDeserializer = valueDeserializer;
+
+			return this;
+		}
+
 		public IKafkaProcessor<TKey, TValue> Build()
 		{
 			CheckIfConfigured();
 
-			var consumer = new ConsumerBuilder<TKey, TValue>(_consumerConfig)
-				.SetPartitionsAssignedHandler(OnPartitionsAssigned)
-				.SetPartitionsRevokedHandler(OnPartitionsRevoked)
-				.Build();
-
-			//TODO: Value/Key deserializers for consumer
+			var consumer = BuildConsumer();
 
 			//TODO: expose WithProcessorConfig() method
-			var config = Options.Create(new ProcessorConfig
+			var processorConfig = Options.Create(new ProcessorConfig
 			{
 				Topic = _topic
 			});
@@ -83,7 +101,26 @@ namespace KafkaConsumer.Processor
 			return new KafkaProcessor<TKey, TValue>(
 				consumer,
 				_topicPartitionQueueSelector,
-				config);
+				processorConfig);
+		}
+
+		private IConsumer<TKey, TValue> BuildConsumer()
+		{
+			var builder = new ConsumerBuilder<TKey, TValue>(_consumerConfig)
+				.SetPartitionsAssignedHandler(OnPartitionsAssigned)
+				.SetPartitionsRevokedHandler(OnPartitionsRevoked);
+
+			if (_keyDeserializer != null)
+			{
+				builder.SetKeyDeserializer(_keyDeserializer);
+			}
+
+			if (_valueDeserializer != null)
+			{
+				builder.SetValueDeserializer(_valueDeserializer);
+			}
+
+			return builder.Build();
 		}
 
 		private IEnumerable<TopicPartitionOffset> OnPartitionsRevoked(

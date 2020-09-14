@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using FluentAssertions;
 using KafkaConsumer.Processor;
 using KafkaConsumer.Processor.Config;
 using KafkaConsumer.Tests.Extensions;

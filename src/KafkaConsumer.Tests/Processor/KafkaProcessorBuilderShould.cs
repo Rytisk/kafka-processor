@@ -1,4 +1,5 @@
-﻿using KafkaConsumer.MessageHandler;
+﻿using Confluent.Kafka;
+using KafkaConsumer.MessageHandler;
 using KafkaConsumer.Processor;
 using KafkaConsumer.TopicPartitionQueue;
 using Moq;
@@ -12,9 +13,13 @@ namespace KafkaConsumer.Tests.Processor
 		private readonly Mock<ITopicPartitionQueueSelector<string, string>> _topicPartitionQueueSelector;
 		private readonly Mock<IMessageHandler<string, string>> _messageHandler;
 		private readonly KafkaProcessorBuilder<string, string> _kafkaProcessorBuilder;
+		private readonly Mock<IDeserializer<string>> _keyDeserializer;
+		private readonly Mock<IDeserializer<string>> _valueDeserializer;
 
 		public KafkaProcessorBuilderShould()
 		{
+			_keyDeserializer = new Mock<IDeserializer<string>>();
+			_valueDeserializer = new Mock<IDeserializer<string>>();
 			_messageHandler = new Mock<IMessageHandler<string, string>>();
 			_topicPartitionQueueSelector = new Mock<ITopicPartitionQueueSelector<string, string>>();
 
@@ -43,7 +48,7 @@ namespace KafkaConsumer.Tests.Processor
 		public void ThrowIfTopicNotSet()
 		{
 			// arrange
-			var consumerConfig = new Confluent.Kafka.ConsumerConfig();
+			var consumerConfig = new ConsumerConfig();
 			
 			_kafkaProcessorBuilder
 				.WithConfig(consumerConfig)
@@ -61,7 +66,7 @@ namespace KafkaConsumer.Tests.Processor
 		public void ThrowIfHandlerFactoryNotSet()
 		{
 			// arrange
-			var consumerConfig = new Confluent.Kafka.ConsumerConfig();
+			var consumerConfig = new ConsumerConfig();
 			var topic = "topic";
 
 			_kafkaProcessorBuilder
@@ -80,7 +85,7 @@ namespace KafkaConsumer.Tests.Processor
 		public void ThrowIfConsumerConfigAlreadySet()
 		{
 			// arrange
-			var consumerConfig = new Confluent.Kafka.ConsumerConfig();
+			var consumerConfig = new ConsumerConfig();
 
 			_kafkaProcessorBuilder.WithConfig(consumerConfig);
 
@@ -123,6 +128,36 @@ namespace KafkaConsumer.Tests.Processor
 
 			// assert
 			Assert.Equal("'handlerFactory' was already set!", exception.Message);
+		}
+
+		[Fact]
+		public void ThrowIfKeyDeserializerAlreadySet()
+		{
+			// arrange
+			_kafkaProcessorBuilder.WithKeyDeserializer(_keyDeserializer.Object);
+
+			// act
+
+			var exception = Assert.Throws<InvalidOperationException>(
+				() => _kafkaProcessorBuilder.WithKeyDeserializer(_keyDeserializer.Object));
+
+			// assert
+			Assert.Equal("'keyDeserializer' was already set!", exception.Message);
+		}
+
+		[Fact]
+		public void ThrowIfValueDeserializerAlreadySet()
+		{
+			// arrange
+			_kafkaProcessorBuilder.WithValueDeserializer(_valueDeserializer.Object);
+
+			// act
+
+			var exception = Assert.Throws<InvalidOperationException>(
+				() => _kafkaProcessorBuilder.WithValueDeserializer(_valueDeserializer.Object));
+
+			// assert
+			Assert.Equal("'valueDeserializer' was already set!", exception.Message);
 		}
 	}
 }
