@@ -102,6 +102,27 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
 		}
 
 		[Fact]
+		public void AbortQueuesOnRemove()
+		{
+			// arrange
+			var tp = DataGenerator.TopicPartition;
+
+			_topicPartitionQueueFactory
+				.Setup(tpqf => tpqf.Create(
+					It.IsAny<IMessageHandler<string, string>>(),
+					It.IsAny<int>()))
+				.Returns(_topicPartitionQueue.Object);
+			
+			_topicPartitionQueueSelector.AddQueue(tp, _messageHandler.Object);
+
+			// act
+			_topicPartitionQueueSelector.Remove(new []{ tp });
+
+			// assert
+			_topicPartitionQueue.Verify(tpq => tpq.AbortAsync(), Times.Once());
+		}
+
+		[Fact]
 		public void ThrowIfTopicPartitionNotFound()
 		{
 			// arrange
