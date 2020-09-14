@@ -62,5 +62,75 @@ namespace KafkaConsumer.Tests.Processor
 				tpq => tpq.TryEnqueueAsync(message.IsActual()),
 				Times.Once());
 		}
+
+		[Fact]
+		public async Task CloseConsumerAfterStoppingToProcessMessages()
+		{
+			// arrange
+			var cr = DataGenerator.ConsumeResult;
+			var message = DataGenerator.GenerateMessage(_consumer.Object);
+			var cts = new CancellationTokenSource();
+
+			_consumer
+				.Setup(c => c.Consume(It.IsAny<CancellationToken>()))
+				.Callback<CancellationToken>(_ => cts.Cancel())
+				.Returns(cr);
+
+			_topicPartitionQueueSelector
+				.Setup(t => t.Select(cr.TopicPartition.IsActual()))
+				.Returns(_topicPartitionQueue.Object);
+
+			// act
+			await _kafkaProcessor.ProcessMessagesAsync(cts.Token);
+
+			// assert
+			_consumer.Verify(
+				c => c.Close(), 
+				Times.Once());
+		}
+
+		[Fact]
+		public async Task CloseConsumerIfExceptionWasThrown()
+		{
+			// arrange
+			_consumer
+				.Setup(c => c.Consume(It.IsAny<CancellationToken>()))
+				.Throws<NullReferenceException>();
+
+			// act
+			await Assert.ThrowsAsync<NullReferenceException>(
+				() => _kafkaProcessor.ProcessMessagesAsync(CancellationToken.None));
+
+			// assert
+			_consumer.Verify(
+				c => c.Close(),
+				Times.Once());
+		}
+		
+		[Fact]
+		public async Task SubscribeToTopic()
+		{
+			// arrange
+			var cr = DataGenerator.ConsumeResult;
+			var message = DataGenerator.GenerateMessage(_consumer.Object);
+			var cts = new CancellationTokenSource();
+
+			_consumer
+				.Setup(c => c.Consume(It.IsAny<CancellationToken>()))
+				.Callback<CancellationToken>(_ => cts.Cancel())
+				.Returns(cr);
+
+			_topicPartitionQueueSelector
+				.Setup(t => t.Select(cr.TopicPartition.IsActual()))
+				.Returns(_topicPartitionQueue.Object);
+
+			// act
+			await _kafkaProcessor.ProcessMessagesAsync(cts.Token);
+
+			// assert
+			_consumer.Verify(
+				c => c.Subscribe(_config.Topic),
+				Times.Once());
+		}
 	}
 }
