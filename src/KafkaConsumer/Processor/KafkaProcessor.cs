@@ -40,12 +40,7 @@ namespace KafkaConsumer.Processor
 
 						var message = new MessageHandler.Message<TKey, TValue>(_consumer, consumeResult);
 
-						var isEnqueued = await queue.TryEnqueueAsync(message);
-
-						if (!isEnqueued)
-						{
-							await queue.AbortAsync();
-						}
+						await queue.EnqueueAsync(message);
 					}
 				}
 			}

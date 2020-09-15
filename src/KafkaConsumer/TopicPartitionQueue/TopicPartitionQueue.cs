@@ -53,5 +53,15 @@ namespace KafkaConsumer.TopicPartitionQueue
 
 		public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> message) =>
 			await _bufferBlock.SendAsync(message);
+
+		public async Task EnqueueAsync(Message<TKey, TValue> message)
+		{
+			var isEnqueued = await _bufferBlock.SendAsync(message);
+
+			if (!isEnqueued)
+			{
+				await AbortAsync();
+			}
+		}
 	}
 }
