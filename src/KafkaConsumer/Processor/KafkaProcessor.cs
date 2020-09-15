@@ -47,6 +47,9 @@ namespace KafkaConsumer.Processor
 			catch (OperationCanceledException) { }
 			finally
 			{
+				//TODO: Close() blocks indefinitely if an exception is thrown in PartitionsRevoked/Assigned handlers.
+				// https://github.com/confluentinc/confluent-kafka-dotnet/issues/1280
+
 				_consumer.Close();
 			}
 		}
