@@ -90,7 +90,6 @@ namespace KafkaConsumer.Tests.Processor
 			_kafkaProcessorBuilder.WithConfig(consumerConfig);
 
 			// act
-
 			var exception = Assert.Throws<InvalidOperationException>(
 				() => _kafkaProcessorBuilder.WithConfig(consumerConfig));
 
@@ -107,7 +106,6 @@ namespace KafkaConsumer.Tests.Processor
 			_kafkaProcessorBuilder.FromTopic(topic);
 
 			// act
-
 			var exception = Assert.Throws<InvalidOperationException>(
 				() => _kafkaProcessorBuilder.FromTopic(topic));
 
@@ -122,7 +120,6 @@ namespace KafkaConsumer.Tests.Processor
 			_kafkaProcessorBuilder.WithHandlerFactory(_ => _messageHandler.Object);
 
 			// act
-
 			var exception = Assert.Throws<InvalidOperationException>(
 				() => _kafkaProcessorBuilder.WithHandlerFactory(_ => _messageHandler.Object));
 
@@ -137,7 +134,6 @@ namespace KafkaConsumer.Tests.Processor
 			_kafkaProcessorBuilder.WithKeyDeserializer(_keyDeserializer.Object);
 
 			// act
-
 			var exception = Assert.Throws<InvalidOperationException>(
 				() => _kafkaProcessorBuilder.WithKeyDeserializer(_keyDeserializer.Object));
 
@@ -152,7 +148,6 @@ namespace KafkaConsumer.Tests.Processor
 			_kafkaProcessorBuilder.WithValueDeserializer(_valueDeserializer.Object);
 
 			// act
-
 			var exception = Assert.Throws<InvalidOperationException>(
 				() => _kafkaProcessorBuilder.WithValueDeserializer(_valueDeserializer.Object));
 

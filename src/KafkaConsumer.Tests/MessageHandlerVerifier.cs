@@ -7,11 +7,11 @@ using Xunit;
 
 namespace KafkaConsumer.Tests
 {
-
     public class MessageHandlerVerifier
     {
+        private readonly List<Message<string, string>> _messages;
+        
         private int _index;
-        private List<Message<string, string>> _messages;
 
         public MessageHandlerVerifier(List<Message<string, string>> messages)
         {

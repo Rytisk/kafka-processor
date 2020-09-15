@@ -5,7 +5,7 @@ namespace KafkaConsumer.Tests.Extensions
 {
 	public static class ObjectExtensions
 	{
-		public static bool IsEquivalentTo(this object actual, object expected)
+		public static bool IsEquivalentTo<T>(this T actual, T expected)
 		{
 			actual.Should().BeEquivalentTo(expected);
 

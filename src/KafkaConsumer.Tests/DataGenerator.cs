@@ -12,7 +12,7 @@ namespace KafkaConsumer.Tests
 				.Select(i => new TopicPartition("test-topic", i));
 
 		public static TopicPartition TopicPartition =>
-					new TopicPartition("test-topic", 1);
+			new TopicPartition("test-topic", 1);
 
 		public static TopicPartitionOffset TopicPartitionOffset =>
 			new TopicPartitionOffset(TopicPartition, 1);

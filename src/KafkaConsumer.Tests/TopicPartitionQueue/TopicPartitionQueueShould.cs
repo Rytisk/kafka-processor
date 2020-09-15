@@ -49,7 +49,6 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
             await _topicPartitionQueue.CompleteAsync();
 
             // assert
-            
             MessageHandlerVerifier.Verify(_messageHandler, messages);
         }
 
@@ -64,12 +63,7 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
                 .Throws<InvalidOperationException>();
 
             // act
-            bool isEnqueued;
-            do
-            {
-                isEnqueued = await _topicPartitionQueue.TryEnqueueAsync(message);
-            }
-            while(isEnqueued);
+            await EnqueueWhileSuccessful(message);
 
             // assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -91,12 +85,7 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
                 .Throws<InvalidOperationException>();
 
             // act
-            bool isEnqueued;
-            do
-            {
-                isEnqueued = await _topicPartitionQueue.TryEnqueueAsync(message);
-            }
-            while(isEnqueued);
+            await EnqueueWhileSuccessful(message);
 
             // assert
             await Assert.ThrowsAsync<InvalidOperationException>(
@@ -105,6 +94,11 @@ namespace KafkaConsumer.Tests.TopicPartitionQueue
             _messageHandler.Verify(
                 m => m.HandleAsync(message.IsActual()),
                 Times.Once());
+        }
+
+        private async Task EnqueueWhileSuccessful(MessageHandler.Message<string, string> message)
+		{
+            while (await _topicPartitionQueue.TryEnqueueAsync(message)) { }
         }
     }
 }
