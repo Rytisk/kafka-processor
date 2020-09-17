@@ -16,7 +16,10 @@ namespace KafkaConsumer.Sample
 		private readonly ILogger<KafkaBackgroundService> _logger;
 		private readonly ConsumerConfig _consumerConfig;
 
-		public KafkaBackgroundService(IHostApplicationLifetime hostApplicationLifetime, ILogger<KafkaBackgroundService> logger, IOptions<ConsumerConfig> consumerConfig)
+		public KafkaBackgroundService(
+			IHostApplicationLifetime hostApplicationLifetime,
+			ILogger<KafkaBackgroundService> logger,
+			IOptions<ConsumerConfig> consumerConfig)
 		{
 			_hostApplicationLifetime = hostApplicationLifetime;
 			_consumerConfig = consumerConfig.Value;
