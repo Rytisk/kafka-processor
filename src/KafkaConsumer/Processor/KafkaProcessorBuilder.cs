@@ -123,7 +123,7 @@ namespace KafkaConsumer.Processor
 			return builder.Build();
 		}
 
-		private IEnumerable<TopicPartitionOffset> OnPartitionsRevoked(
+		private void OnPartitionsRevoked(
 			IConsumer<TKey, TValue> consumer,
 			List<TopicPartitionOffset> partitions)
 		{
@@ -136,10 +136,8 @@ namespace KafkaConsumer.Processor
 			catch (KafkaException ex)
 				when (ex.Error.Code == ErrorCode.Local_NoOffset)
 			{
-				// ignore 
+				// ignore
 			}
-
-			return partitions;
 		}
 
 		private IEnumerable<TopicPartitionOffset> OnPartitionsAssigned(
