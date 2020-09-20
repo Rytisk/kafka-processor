@@ -1,7 +1,10 @@
 using Confluent.Kafka;
+using KafkaProcessor.Sample.MessageHandlers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using KafkaProcessor.Extensions;
+using KafkaProcessor.MessageHandler;
 
 namespace KafkaProcessor.Sample
 {
@@ -15,10 +18,15 @@ namespace KafkaProcessor.Sample
 
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.Configure<ConsumerConfig>(
-				_configuration.GetSection("Consumer"));
+			services.AddKafkaService<string, string>(
+				typeof(SimpleMessageHandler),
+				_configuration,
+				"test-topic");
 
-			services.AddHostedService<KafkaBackgroundService>();
+			services.AddKafkaService<string, string>(
+				typeof(SimpleMessageHandler),
+				_configuration,
+				"another-topic");
 		}
 
 		public void Configure(IApplicationBuilder app)

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaProcessor.Tests", "Kaf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaProcessor.Sample", "KafkaProcessor.Sample\KafkaProcessor.Sample.csproj", "{B5A97BEE-E638-49BC-A1FC-B5D925F73CBC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaProcessor.Extensions", "KafkaProcessor.Extensions\KafkaProcessor.Extensions.csproj", "{E500EDFB-9746-4C27-9C43-F095E0CC454D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{B5A97BEE-E638-49BC-A1FC-B5D925F73CBC}.Release|x64.Build.0 = Release|Any CPU
 		{B5A97BEE-E638-49BC-A1FC-B5D925F73CBC}.Release|x86.ActiveCfg = Release|Any CPU
 		{B5A97BEE-E638-49BC-A1FC-B5D925F73CBC}.Release|x86.Build.0 = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|x64.Build.0 = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Debug|x86.Build.0 = Debug|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|x64.ActiveCfg = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|x64.Build.0 = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|x86.ActiveCfg = Release|Any CPU
+		{E500EDFB-9746-4C27-9C43-F095E0CC454D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
