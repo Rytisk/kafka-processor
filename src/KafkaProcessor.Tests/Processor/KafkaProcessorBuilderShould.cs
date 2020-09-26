@@ -4,6 +4,8 @@ using KafkaProcessor.Processor;
 using KafkaProcessor.TopicPartitionQueue;
 using Moq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
 namespace KafkaProcessor.Tests.Processor
@@ -15,9 +17,11 @@ namespace KafkaProcessor.Tests.Processor
         private readonly KafkaProcessorBuilder<string, string> _kafkaProcessorBuilder;
         private readonly Mock<IDeserializer<string>> _keyDeserializer;
         private readonly Mock<IDeserializer<string>> _valueDeserializer;
+        private readonly Func<IEnumerable<TopicPartition>, IEnumerable<(TopicPartition, IMessageHandler<string, string>)>> _createHandlers;
 
         public KafkaProcessorBuilderShould()
         {
+            _createHandlers = (partitions) => partitions.Select(p => (p, _messageHandler.Object));
             _keyDeserializer = new Mock<IDeserializer<string>>();
             _valueDeserializer = new Mock<IDeserializer<string>>();
             _messageHandler = new Mock<IMessageHandler<string, string>>();
@@ -63,7 +67,7 @@ namespace KafkaProcessor.Tests.Processor
         }
 
         [Fact]
-        public void ThrowIfHandlerFactoryNotSet()
+        public void ThrowIfCreateHandlersNotSet()
         {
             // arrange
             var consumerConfig = new ConsumerConfig();
@@ -78,7 +82,7 @@ namespace KafkaProcessor.Tests.Processor
                 () => _kafkaProcessorBuilder.Build());
 
             // assert
-            Assert.Equal("'handlerFactory' must be set!", exception.Message);
+            Assert.Equal("'createHandlers' must be set!", exception.Message);
         }
 
         [Fact]
@@ -114,17 +118,17 @@ namespace KafkaProcessor.Tests.Processor
         }
 
         [Fact]
-        public void ThrowIfHandlerFactoryAlreadySet()
+        public void ThrowIfCreateHandlersAlreadySet()
         {
             // arrange
-            _kafkaProcessorBuilder.WithHandlerFactory(_ => _messageHandler.Object);
+            _kafkaProcessorBuilder.SetCreateHandlers(_createHandlers);
 
             // act
             var exception = Assert.Throws<InvalidOperationException>(
-                () => _kafkaProcessorBuilder.WithHandlerFactory(_ => _messageHandler.Object));
+                () => _kafkaProcessorBuilder.SetCreateHandlers(_createHandlers));
 
             // assert
-            Assert.Equal("'handlerFactory' was already set!", exception.Message);
+            Assert.Equal("'createHandlers' was already set!", exception.Message);
         }
 
         [Fact]

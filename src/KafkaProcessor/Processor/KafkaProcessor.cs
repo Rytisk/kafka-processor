@@ -2,9 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Confluent.Kafka;
-using KafkaProcessor.Processor.Config;
 using KafkaProcessor.TopicPartitionQueue;
-using Microsoft.Extensions.Options;
 
 namespace KafkaProcessor.Processor
 {
@@ -12,21 +10,21 @@ namespace KafkaProcessor.Processor
     {
         private readonly IConsumer<TKey, TValue> _consumer;
         private readonly ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
-        private readonly ProcessorConfig _config;
+        private readonly string _topic;
 
         public KafkaProcessor(
             IConsumer<TKey, TValue> consumer,
             ITopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector,
-            IOptions<ProcessorConfig> config)
+            string topic)
         {
             _consumer = consumer;
             _topicPartitionQueueSelector = topicPartitionQueueSelector;
-            _config = config.Value;
+            _topic = topic;
         }
 
         public async Task ProcessMessagesAsync(CancellationToken ct)
         {
-            _consumer.Subscribe(_config.Topic);
+            _consumer.Subscribe(_topic);
 
             try
             {

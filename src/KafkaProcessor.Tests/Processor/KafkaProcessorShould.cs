@@ -18,22 +18,19 @@ namespace KafkaProcessor.Tests.Processor
         private readonly Mock<ITopicPartitionQueue<string, string>> _topicPartitionQueue;
         private readonly Mock<ITopicPartitionQueueSelector<string, string>> _topicPartitionQueueSelector;
         private readonly KafkaProcessor<string, string> _kafkaProcessor;
-        private readonly ProcessorConfig _config;
+        private readonly string _topic;
 
         public KafkaProcessorShould()
         {
             _topicPartitionQueue = new Mock<ITopicPartitionQueue<string, string>>();
             _consumer = new Mock<IConsumer<string, string>>();
             _topicPartitionQueueSelector = new Mock<ITopicPartitionQueueSelector<string, string>>();
-            _config = new ProcessorConfig
-            {
-                Topic = "test-topic"
-            };
+            _topic = "test-topic";
 
             _kafkaProcessor = new KafkaProcessor<string, string>(
                 _consumer.Object,
                 _topicPartitionQueueSelector.Object,
-                Options.Create(_config));
+                _topic);
         }
 
         [Fact]
@@ -128,7 +125,7 @@ namespace KafkaProcessor.Tests.Processor
 
             // assert
             _consumer.Verify(
-                c => c.Subscribe(_config.Topic),
+                c => c.Subscribe(_topic),
                 Times.Once());
         }
     }

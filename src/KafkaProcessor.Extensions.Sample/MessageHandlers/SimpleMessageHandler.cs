@@ -1,15 +1,15 @@
 ﻿using KafkaProcessor.MessageHandler;
-using KafkaProcessor.Sample.MessageHandlers.Extensions;
+using KafkaProcessor.Extensions.Sample.MessageHandlers.Extensions;
 using System;
 using System.Threading.Tasks;
 
-namespace KafkaProcessor.Sample.MessageHandlers
+namespace KafkaProcessor.Extensions.Sample.MessageHandlers
 {
     public class SimpleMessageHandler : IMessageHandler<string, string>
     {
         public SimpleMessageHandler()
         {
-            Console.WriteLine($"Created a message handler");
+            Console.WriteLine($"SimpleHandler created");
         }
 
         public async Task HandleAsync(Message<string, string> message)
@@ -23,7 +23,7 @@ namespace KafkaProcessor.Sample.MessageHandlers
         {
             (var key, var value) = message.ConsumeResult.Message;
 
-            Console.WriteLine(
+            Console.WriteLine("SIMPLE: " +
                 $"Processing a message - {message.ConsumeResult.TopicPartitionOffset} - " +
                 $"Key='{key}', " +
                 $"Value='{value}'");

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace KafkaProcessor.Sample
+namespace KafkaProcessor.Extensions.Sample
 {
     public class Program
     {

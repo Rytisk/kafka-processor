@@ -1,6 +1,5 @@
-using System;
-using Confluent.Kafka;
-using Microsoft.Extensions.Configuration;
+using KafkaProcessor.MessageHandler;
+using KafkaProcessor.Processor.Config;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -10,30 +9,22 @@ namespace KafkaProcessor.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddKafkaService<TKey, TValue>(
+        public static IServiceCollection AddKafkaProcessor<TKey, TValue, THandler>(
             this IServiceCollection services,
-            Type handler, IConfiguration configuration, string topic)
+            ProcessorConfig config) where THandler : class, IMessageHandler<TKey, TValue>
         {
-            services.AddScoped(handler);
+            services.AddScoped<THandler>();
 
             services.AddSingleton<IHostedService>(sp => 
             {
-                var config = Options.Create(
-                    configuration
-                        .GetSection("Consumer")
-                        .Get<ConsumerConfig>());
-
-                var logger = sp.GetService<ILogger<KafkaBackgroundService<TKey, TValue>>>();
+                var logger = sp.GetService<ILogger<KafkaBackgroundService<TKey, TValue, THandler>>>();
                 var lifetime = sp.GetService<IHostApplicationLifetime>();
-                var scope = sp.CreateScope();
 
-                return new KafkaBackgroundService<TKey, TValue>(
+                return new KafkaBackgroundService<TKey, TValue, THandler>(
                     lifetime, 
                     logger, 
-                    config,
-                    scope,
-                    handler,
-                    topic);
+                    Options.Create(config),
+                    new ScopedHandlerFactory<TKey, TValue>(sp));
             });
 
 

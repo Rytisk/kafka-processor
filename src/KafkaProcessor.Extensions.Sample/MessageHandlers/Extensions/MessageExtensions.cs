@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 
-namespace KafkaProcessor.Sample.MessageHandlers.Extensions
+namespace KafkaProcessor.Extensions.Sample.MessageHandlers.Extensions
 {
     public static class MessageExtensions
     {

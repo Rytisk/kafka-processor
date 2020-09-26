@@ -1,39 +1,35 @@
 ﻿using Confluent.Kafka;
 using KafkaProcessor.MessageHandler;
 using KafkaProcessor.Processor;
-using Microsoft.Extensions.DependencyInjection;
+using KafkaProcessor.Processor.Config;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace KafkaProcessor.Extensions
 {
-    public class KafkaBackgroundService<TKey, TValue> : BackgroundService
+    internal class KafkaBackgroundService<TKey, TValue, THandler> : BackgroundService 
+        where THandler : IMessageHandler<TKey, TValue>
     {
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
-        private readonly ILogger<KafkaBackgroundService<TKey, TValue>> _logger;
-        private readonly IServiceScope _scope;
-        private readonly Type _handlerType;
-        private readonly ConsumerConfig _consumerConfig;
-        private readonly string _topic;
-
+        private readonly ILogger<KafkaBackgroundService<TKey, TValue, THandler>> _logger;
+        private readonly ProcessorConfig _processorConfig;
+        private readonly ScopedHandlerFactory<TKey, TValue> _handlerFactory;
+        
         public KafkaBackgroundService(
             IHostApplicationLifetime hostApplicationLifetime,
-            ILogger<KafkaBackgroundService<TKey, TValue>> logger,
-            IOptions<ConsumerConfig> consumerConfig,
-            IServiceScope scope,
-            Type handlerType,
-            string topic)
+            ILogger<KafkaBackgroundService<TKey, TValue, THandler>> logger,
+            IOptions<ProcessorConfig> processorConfig,
+            ScopedHandlerFactory<TKey, TValue> handlerFactory)
         {
             _hostApplicationLifetime = hostApplicationLifetime;
-            _consumerConfig = consumerConfig.Value;
+            _processorConfig = processorConfig.Value;
             _logger = logger;
-            _scope = scope;
-            _handlerType = handlerType;
-            _topic = topic;
+            _handlerFactory = handlerFactory;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken) => Task.Run(async () =>
@@ -42,10 +38,9 @@ namespace KafkaProcessor.Extensions
             {
                 using var kafkaProcessor = KafkaProcessorBuilder<TKey, TValue>
                     .CreateDefault()
-                    .WithConfig(_consumerConfig)
-                    .WithHandlerFactory(
-                        tp => (IMessageHandler<TKey, TValue>)_scope.ServiceProvider.GetService(_handlerType))
-                    .FromTopic(_topic)
+                    .WithProcessorConfig(_processorConfig)
+                    .SetCreateHandlers(OnCreateHandlers)
+                    .SetRemoveHandlers(OnRemoveHandlers)
                     .Build();
 
                 await kafkaProcessor.ProcessMessagesAsync(stoppingToken);
@@ -62,12 +57,17 @@ namespace KafkaProcessor.Extensions
             }
         });
 
-        public override void Dispose()
+        private void OnRemoveHandlers(IEnumerable<TopicPartitionOffset> partitions)
         {
-            _scope.Dispose();
-
-            base.Dispose();
+            _handlerFactory.Close();
         }
-    
+
+        private IEnumerable<(TopicPartition, IMessageHandler<TKey, TValue>)> OnCreateHandlers(IEnumerable<TopicPartition> partitions)
+        {
+            foreach (var partition in partitions)
+            {
+                yield return (partition, _handlerFactory.Create<THandler>(partition));
+            }
+        }
     }
 }
