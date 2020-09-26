@@ -5,178 +5,208 @@ using Confluent.Kafka;
 using KafkaProcessor.MessageHandler;
 using KafkaProcessor.Processor.Config;
 using KafkaProcessor.TopicPartitionQueue;
-using Microsoft.Extensions.Options;
 
 namespace KafkaProcessor.Processor
 {
-	public class KafkaProcessorBuilder<TKey, TValue>
-	{
-		private readonly ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
+    public class KafkaProcessorBuilder<TKey, TValue>
+    {
+        private readonly ITopicPartitionQueueSelector<TKey, TValue> _topicPartitionQueueSelector;
 
-		private Func<TopicPartition, IMessageHandler<TKey, TValue>> _handlerFactory;
-		private ConsumerConfig _consumerConfig;
-		private string _topic;
-		private IDeserializer<TKey> _keyDeserializer;
-		private IDeserializer<TValue> _valueDeserializer;
+        private Func<IEnumerable<TopicPartition>, IEnumerable<(TopicPartition, IMessageHandler<TKey, TValue>)>> _createHandlers;
+        private Action<IEnumerable<TopicPartitionOffset>> _removeHandlers;
+        private ConsumerConfig _consumerConfig;
+        private string _topic;
+        private IDeserializer<TKey> _keyDeserializer;
+        private IDeserializer<TValue> _valueDeserializer;
 
-		public KafkaProcessorBuilder(ITopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector)
-		{
-			_topicPartitionQueueSelector = topicPartitionQueueSelector;
-		}
+        public KafkaProcessorBuilder(ITopicPartitionQueueSelector<TKey, TValue> topicPartitionQueueSelector)
+        {
+            _topicPartitionQueueSelector = topicPartitionQueueSelector;
+        }
 
-		public static KafkaProcessorBuilder<TKey, TValue> CreateDefault()
-		{
-			var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
+        public static KafkaProcessorBuilder<TKey, TValue> CreateDefault()
+        {
+            var queueFactory = new TopicPartitionQueueFactory<TKey, TValue>();
 
-			var topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(
-				queueFactory,
-				1000);
+            var topicPartitionQueueSelector = new TopicPartitionQueueSelector<TKey, TValue>(
+                queueFactory,
+                1000);
 
-			return new KafkaProcessorBuilder<TKey, TValue>(topicPartitionQueueSelector);
-		}
+            return new KafkaProcessorBuilder<TKey, TValue>(topicPartitionQueueSelector);
+        }
 
-		public KafkaProcessorBuilder<TKey, TValue> WithConfig(ConsumerConfig consumerConfig)
-		{
-			if (_consumerConfig != null) 
-				throw new InvalidOperationException("'consumerConfig' was already set!");
+        public KafkaProcessorBuilder<TKey, TValue> WithProcessorConfig(ProcessorConfig processorConfig)
+        {
+            return WithConfig(processorConfig.ConsumerConfig).FromTopic(processorConfig.Topic);
+        }
 
-			_consumerConfig = consumerConfig;
+        public KafkaProcessorBuilder<TKey, TValue> WithConfig(ConsumerConfig consumerConfig)
+        {
+            if (_consumerConfig != null) 
+                throw new InvalidOperationException("'consumerConfig' was already set!");
 
-			return this;
-		}
+            _consumerConfig = consumerConfig;
 
-		public KafkaProcessorBuilder<TKey, TValue> FromTopic(string topic)
-		{
-			if (_topic != null) 
-				throw new InvalidOperationException("'topic' was already set!");
+            return this;
+        }
 
-			_topic = topic;
+        public KafkaProcessorBuilder<TKey, TValue> FromTopic(string topic)
+        {
+            if (_topic != null) 
+                throw new InvalidOperationException("'topic' was already set!");
 
-			return this;
-		}
+            _topic = topic;
 
-		public KafkaProcessorBuilder<TKey, TValue> WithHandlerFactory(
-			Func<TopicPartition, IMessageHandler<TKey, TValue>> handlerFactory)
-		{
-			if (_handlerFactory != null) 
-				throw new InvalidOperationException("'handlerFactory' was already set!");
-			
-			_handlerFactory = handlerFactory;
+            return this;
+        }
 
-			return this;
-		}
+        public KafkaProcessorBuilder<TKey, TValue> WithHandlerFactory(
+            Func<TopicPartition, IMessageHandler<TKey, TValue>> handlerFactory)
+        {
+            SetCreateHandlers((partitions) => 
+            {
+                var handlers = new List<(TopicPartition, IMessageHandler<TKey, TValue>)>();
+             
+                foreach (var partition in partitions)
+                {
+                    handlers.Add((partition, handlerFactory(partition)));
+                }
 
-		public KafkaProcessorBuilder<TKey, TValue> WithKeyDeserializer(IDeserializer<TKey> keyDeserializer)
-		{
-			if (_keyDeserializer != null)
-				throw new InvalidOperationException("'keyDeserializer' was already set!");
+                return handlers;
+            });
 
-			_keyDeserializer = keyDeserializer;
-			
-			return this;
-		}
+            return this;
+        }
 
-		public KafkaProcessorBuilder<TKey, TValue> WithValueDeserializer(IDeserializer<TValue> valueDeserializer)
-		{
-			if (_valueDeserializer != null)
-				throw new InvalidOperationException("'valueDeserializer' was already set!");
+        //TODO: naming
+        public KafkaProcessorBuilder<TKey, TValue> SetCreateHandlers(
+            Func<IEnumerable<TopicPartition>, IEnumerable<(TopicPartition, IMessageHandler<TKey, TValue>)>> createHandlers)
+        {
+            if (_createHandlers != null)
+                throw new InvalidOperationException("'createHandlers' was already set!");
 
-			_valueDeserializer = valueDeserializer;
+            _createHandlers = createHandlers;
 
-			return this;
-		}
+            return this;
+        }
 
-		public IKafkaProcessor<TKey, TValue> Build()
-		{
-			CheckIfConfigured();
+        //TODO: naming
+        public KafkaProcessorBuilder<TKey, TValue> SetRemoveHandlers(
+            Action<IEnumerable<TopicPartitionOffset>> removeHandlers)
+        {
+            if (_removeHandlers != null)
+                throw new InvalidOperationException("'removeHandlers' was already set!");
 
-			var consumer = BuildConsumer();
+            _removeHandlers = removeHandlers;
 
-			//TODO: expose WithProcessorConfig() method
-			var processorConfig = Options.Create(new ProcessorConfig
-			{
-				Topic = _topic
-			});
+            return this;
+        }
 
-			return new KafkaProcessor<TKey, TValue>(
-				consumer,
-				_topicPartitionQueueSelector,
-				processorConfig);
-		}
+        public KafkaProcessorBuilder<TKey, TValue> WithKeyDeserializer(IDeserializer<TKey> keyDeserializer)
+        {
+            if (_keyDeserializer != null)
+                throw new InvalidOperationException("'keyDeserializer' was already set!");
 
-		private IConsumer<TKey, TValue> BuildConsumer()
-		{
-			var builder = new ConsumerBuilder<TKey, TValue>(_consumerConfig)
-				.SetPartitionsAssignedHandler(OnPartitionsAssigned)
-				.SetPartitionsRevokedHandler(OnPartitionsRevoked);
+            _keyDeserializer = keyDeserializer;
+            
+            return this;
+        }
 
-			if (_keyDeserializer != null)
-			{
-				builder.SetKeyDeserializer(_keyDeserializer);
-			}
+        public KafkaProcessorBuilder<TKey, TValue> WithValueDeserializer(IDeserializer<TValue> valueDeserializer)
+        {
+            if (_valueDeserializer != null)
+                throw new InvalidOperationException("'valueDeserializer' was already set!");
 
-			if (_valueDeserializer != null)
-			{
-				builder.SetValueDeserializer(_valueDeserializer);
-			}
+            _valueDeserializer = valueDeserializer;
 
-			return builder.Build();
-		}
+            return this;
+        }
 
-		private void OnPartitionsRevoked(
-			IConsumer<TKey, TValue> consumer,
-			List<TopicPartitionOffset> partitions)
-		{
-			_topicPartitionQueueSelector.Remove(partitions.Select(p => p.TopicPartition));
+        public IKafkaProcessor<TKey, TValue> Build()
+        {
+            CheckIfConfigured();
 
-			try
-			{
-				consumer.Commit();
-			}
-			catch (KafkaException ex)
-				when (ex.Error.Code == ErrorCode.Local_NoOffset)
-			{
-				// ignore
-			}
-		}
+            var consumer = BuildConsumer();
 
-		private IEnumerable<TopicPartitionOffset> OnPartitionsAssigned(
-			IConsumer<TKey, TValue> consumer,
-			List<TopicPartition> partitions)
-		{
-			foreach (var partition in partitions)
-			{
-				var messageHandler = _handlerFactory.Invoke(partition);
+            return new KafkaProcessor<TKey, TValue>(
+                consumer,
+                _topicPartitionQueueSelector,
+                _topic);
+        }
 
-				_topicPartitionQueueSelector.AddQueue(partition, messageHandler);
-			}
+        private IConsumer<TKey, TValue> BuildConsumer()
+        {
+            var builder = new ConsumerBuilder<TKey, TValue>(_consumerConfig)
+                .SetPartitionsAssignedHandler(OnPartitionsAssigned)
+                .SetPartitionsRevokedHandler(OnPartitionsRevoked);
 
-			return partitions.Select(p => new TopicPartitionOffset(p, Offset.Stored));
-		}
+            if (_keyDeserializer != null)
+            {
+                builder.SetKeyDeserializer(_keyDeserializer);
+            }
 
-		private void CheckIfConfigured()
-		{
-			CheckIfConsumerConfigSet();
-			CheckIfHandlerFactorySet();
-			CheckIfTopicSet();
-		}
+            if (_valueDeserializer != null)
+            {
+                builder.SetValueDeserializer(_valueDeserializer);
+            }
 
-		private void CheckIfConsumerConfigSet()
-		{
-			if (_consumerConfig == null) 
-				throw new InvalidOperationException("'consumerConfig' must be set!");
-		}
+            return builder.Build();
+        }
 
-		private void CheckIfHandlerFactorySet()
-		{
-			if (_handlerFactory == null) 
-				throw new InvalidOperationException("'handlerFactory' must be set!");
-		}
+        private void OnPartitionsRevoked(
+            IConsumer<TKey, TValue> consumer,
+            List<TopicPartitionOffset> partitions)
+        {
+            _topicPartitionQueueSelector.Remove(partitions.Select(p => p.TopicPartition));
 
-		private void CheckIfTopicSet()
-		{
-			if (string.IsNullOrEmpty(_topic)) 
-				throw new InvalidOperationException("'topic' must be set!");
-		}
-	}
+            try
+            {
+                consumer.Commit();
+            }
+            catch (KafkaException ex)
+                when (ex.Error.Code == ErrorCode.Local_NoOffset)
+            {
+                // ignore
+            }
+
+            _removeHandlers?.Invoke(partitions);
+        }
+
+        private IEnumerable<TopicPartitionOffset> OnPartitionsAssigned(
+            IConsumer<TKey, TValue> consumer,
+            List<TopicPartition> partitions)
+        {
+            foreach (var (partition, handler) in _createHandlers(partitions))
+            {
+                _topicPartitionQueueSelector.AddQueue(partition, handler);
+            }
+
+            return partitions.Select(p => new TopicPartitionOffset(p, Offset.Stored));
+        }
+
+        private void CheckIfConfigured()
+        {
+            CheckIfConsumerConfigSet();
+            CheckIfCreateHandlersSet();
+            CheckIfTopicSet();
+        }
+
+        private void CheckIfConsumerConfigSet()
+        {
+            if (_consumerConfig == null) 
+                throw new InvalidOperationException("'consumerConfig' must be set!");
+        }
+
+        private void CheckIfCreateHandlersSet()
+        {
+            if (_createHandlers == null)
+                throw new InvalidOperationException("'createHandlers' must be set!");
+        }
+
+        private void CheckIfTopicSet()
+        {
+            if (string.IsNullOrEmpty(_topic)) 
+                throw new InvalidOperationException("'topic' must be set!");
+        }
+    }
 }

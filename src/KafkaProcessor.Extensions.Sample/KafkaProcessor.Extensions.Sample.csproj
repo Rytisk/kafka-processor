@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KafkaProcessor\KafkaProcessor.csproj" />
+    <ProjectReference Include="..\KafkaProcessor.Extensions\KafkaProcessor.Extensions.csproj" />
   </ItemGroup>
 
 </Project>

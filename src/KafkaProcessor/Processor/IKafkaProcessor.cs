@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 namespace KafkaProcessor.Processor
 {
-	public interface IKafkaProcessor<TKey, TValue> : IDisposable
-	{
-		Task ProcessMessagesAsync(CancellationToken cancellationToken);
-	}
+    public interface IKafkaProcessor<TKey, TValue> : IDisposable
+    {
+        Task ProcessMessagesAsync(CancellationToken cancellationToken);
+    }
 }

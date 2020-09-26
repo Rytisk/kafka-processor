@@ -5,63 +5,63 @@ using KafkaProcessor.MessageHandler;
 
 namespace KafkaProcessor.TopicPartitionQueue
 {
-	public class TopicPartitionQueue<TKey, TValue> : ITopicPartitionQueue<TKey, TValue>
-	{
-		private readonly IMessageHandler<TKey, TValue> _messageHandler;
+    public class TopicPartitionQueue<TKey, TValue> : ITopicPartitionQueue<TKey, TValue>
+    {
+        private readonly IMessageHandler<TKey, TValue> _messageHandler;
 
-		private readonly BufferBlock<Message<TKey, TValue>> _bufferBlock;
-		private readonly ActionBlock<Message<TKey, TValue>> _actionBlock;
+        private readonly BufferBlock<Message<TKey, TValue>> _bufferBlock;
+        private readonly ActionBlock<Message<TKey, TValue>> _actionBlock;
 
-		public TopicPartitionQueue(IMessageHandler<TKey, TValue> messageHandler, int queueCapacity)
-		{
-			_messageHandler = messageHandler;
+        public TopicPartitionQueue(IMessageHandler<TKey, TValue> messageHandler, int queueCapacity)
+        {
+            _messageHandler = messageHandler;
 
-			_bufferBlock = new BufferBlock<Message<TKey, TValue>>(
-				new DataflowBlockOptions 
-				{
-					BoundedCapacity = queueCapacity
-				});
+            _bufferBlock = new BufferBlock<Message<TKey, TValue>>(
+                new DataflowBlockOptions 
+                {
+                    BoundedCapacity = queueCapacity
+                });
 
-			_actionBlock = new ActionBlock<Message<TKey, TValue>>(
-				_messageHandler.HandleAsync,
-				new ExecutionDataflowBlockOptions 
-				{
-					BoundedCapacity = 1
-				});
+            _actionBlock = new ActionBlock<Message<TKey, TValue>>(
+                _messageHandler.HandleAsync,
+                new ExecutionDataflowBlockOptions 
+                {
+                    BoundedCapacity = 1
+                });
 
-			_bufferBlock.LinkTo(_actionBlock, new DataflowLinkOptions
-			{
-				PropagateCompletion = true
-			});
+            _bufferBlock.LinkTo(_actionBlock, new DataflowLinkOptions
+            {
+                PropagateCompletion = true
+            });
 
-			_actionBlock.PropagateErrorsTo(_bufferBlock);
-		}
+            _actionBlock.PropagateErrorsTo(_bufferBlock);
+        }
 
-		public async Task CompleteAsync()
-		{
-			_bufferBlock.Complete();
+        public async Task CompleteAsync()
+        {
+            _bufferBlock.Complete();
 
-			await _actionBlock.Completion;
-		}
+            await _actionBlock.Completion;
+        }
 
-		public async Task AbortAsync()
-		{
-			_actionBlock.Complete();
+        public async Task AbortAsync()
+        {
+            _actionBlock.Complete();
 
-			await _actionBlock.Completion;
-		}
+            await _actionBlock.Completion;
+        }
 
-		public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> message) =>
-			await _bufferBlock.SendAsync(message);
+        public async Task<bool> TryEnqueueAsync(Message<TKey, TValue> message) =>
+            await _bufferBlock.SendAsync(message);
 
-		public async Task EnqueueAsync(Message<TKey, TValue> message)
-		{
-			var isEnqueued = await _bufferBlock.SendAsync(message);
+        public async Task EnqueueAsync(Message<TKey, TValue> message)
+        {
+            var isEnqueued = await _bufferBlock.SendAsync(message);
 
-			if (!isEnqueued)
-			{
-				await AbortAsync();
-			}
-		}
-	}
+            if (!isEnqueued)
+            {
+                await AbortAsync();
+            }
+        }
+    }
 }
