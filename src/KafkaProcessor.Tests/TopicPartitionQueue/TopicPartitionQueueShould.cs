@@ -97,7 +97,7 @@ namespace KafkaProcessor.Tests.TopicPartitionQueue
         }
 
         private async Task EnqueueWhileSuccessful(MessageHandler.Message<string, string> message)
-		{
+        {
             while (await _topicPartitionQueue.TryEnqueueAsync(message)) { }
         }
     }

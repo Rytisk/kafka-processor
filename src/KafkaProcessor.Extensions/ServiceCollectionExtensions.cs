@@ -14,7 +14,7 @@ namespace KafkaProcessor.Extensions
             this IServiceCollection services,
             Type handler, IConfiguration configuration, string topic)
         {
-			services.AddScoped(handler);
+            services.AddScoped(handler);
 
             services.AddSingleton<IHostedService>(sp => 
             {

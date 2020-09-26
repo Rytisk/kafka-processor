@@ -8,30 +8,30 @@ using KafkaProcessor.MessageHandler;
 
 namespace KafkaProcessor.Sample
 {
-	public class Startup
-	{
-		private readonly IConfiguration _configuration;
-		public Startup(IConfiguration configuration)
-		{
-			_configuration = configuration;
-		}
+    public class Startup
+    {
+        private readonly IConfiguration _configuration;
+        public Startup(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
-		public void ConfigureServices(IServiceCollection services)
-		{
-			services.AddKafkaService<string, string>(
-				typeof(SimpleMessageHandler),
-				_configuration,
-				"test-topic");
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddKafkaService<string, string>(
+                typeof(SimpleMessageHandler),
+                _configuration,
+                "test-topic");
 
-			services.AddKafkaService<string, string>(
-				typeof(SimpleMessageHandler),
-				_configuration,
-				"another-topic");
-		}
+            services.AddKafkaService<string, string>(
+                typeof(SimpleMessageHandler),
+                _configuration,
+                "another-topic");
+        }
 
-		public void Configure(IApplicationBuilder app)
-		{
-			app.UseRouting();
-		}
-	}
+        public void Configure(IApplicationBuilder app)
+        {
+            app.UseRouting();
+        }
+    }
 }
